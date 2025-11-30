@@ -4,7 +4,10 @@ import Link from 'next/link';
 
 export const Header = () => {
   return (
-    <header className="fixed top-0 w-full z-50 bg-navy-950/80 backdrop-blur-md border-b border-white/10">
+    <header
+      data-scroll-lock-aware
+      className="fixed top-0 left-0 w-full z-50 bg-navy-950/80 backdrop-blur-md border-b border-white/10"
+    >
       <div className="container px-4 md:px-6 mx-auto h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-white">

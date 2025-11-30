@@ -152,6 +152,24 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans, "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, sans-serif);
     scrollbar-gutter: stable;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(
+      --font-heading,
+      "Space Grotesk",
+      "Plus Jakarta Sans",
+      "Segoe UI",
+      system-ui,
+      sans-serif
+    );
+    letter-spacing: -0.02em;
+  }
+  body[data-scroll-locked] [data-scroll-lock-aware] {
+    width: calc(100% - var(--removed-body-scroll-bar-size, 0px)) !important;
   }
 }
