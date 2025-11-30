@@ -1,0 +1,8 @@
+export default function NotificationsPage() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-navy-950">Benachrichtigungen</h1>
+      <p className="text-slate-500">Hier würden Ihre Benachrichtigungen erscheinen.</p>
+    </div>
+  );
+}
