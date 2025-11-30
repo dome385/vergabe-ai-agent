@@ -134,11 +134,15 @@ export const ReferencesStep = ({
     [onNext]
   );
 
-  const handleError = useCallback((errors: any) => {
-    const first = Object.values(errors)[0] as { message?: string };
-    const message = first?.message || "Bitte Referenzen & Zertifikate prüfen.";
-    toast.error(String(message));
-  }, []);
+  const handleError = useCallback(
+    (errors: Record<string, { message?: string }>) => {
+      const first = Object.values(errors)[0] as { message?: string };
+      const message =
+        first?.message || "Bitte Referenzen & Zertifikate prüfen.";
+      toast.error(String(message));
+    },
+    []
+  );
 
   useEffect(() => {
     registerSubmit(1, () => form.handleSubmit(handleValid, handleError)());
