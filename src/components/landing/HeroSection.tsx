@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from 'lucide-react';
 
@@ -27,11 +28,14 @@ export const HeroSection = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
+              asChild
               size="lg" 
               className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 py-6 text-lg rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105"
             >
-              Kostenlose Potenzial-Analyse starten
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/onboarding" className="flex items-center">
+                Kostenlose Potenzial-Analyse starten
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
             
             <Button 
