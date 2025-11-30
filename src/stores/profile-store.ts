@@ -6,10 +6,14 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export type BasicsFormData = {
   companyName: string;
   industry: string;
+  cpvCodes: string[];
+  employeeCount: string;
   location: string;
   revenueTier: number;
   contactName: string;
   contactEmail: string;
+  website: string;
+  isAvpq: boolean;
 };
 
 export type ReferenceEntry = {
@@ -18,6 +22,7 @@ export type ReferenceEntry = {
   year: number;
   budget: string;
   keywords: string[];
+  client: string;
 };
 
 export type ReferencesFormData = {
@@ -32,6 +37,7 @@ export type PreferencesFormData = {
   alertFrequency: "Täglich" | "Wöchentlich";
   minMatchScore: number;
   budgetRange: [number, number];
+  regions: string[];
   consent: boolean;
 };
 
@@ -59,46 +65,38 @@ const fallbackStorage: Storage = {
   setItem: () => {},
 };
 
-const defaultState: Omit<ProfileState, "setStep" | "setBasics" | "setReferences" | "setPreferences" | "reset"> =
-  {
-    currentStep: 0,
-    basics: {
-      companyName: "Beispiel GmbH",
-      industry: "IT-Dienste",
-      location: "München, 80331",
-      revenueTier: 1,
-      contactName: "Max Mustermann",
-      contactEmail: "max@beispiel.de",
-    },
-    references: {
-      documents: [],
-      references: [
-        {
-          id: "ref-1",
-          name: "Projekt A",
-          year: 2024,
-          budget: "50k",
-          keywords: ["KNX"],
-        },
-        {
-          id: "ref-2",
-          name: "Projekt B",
-          year: 2023,
-          budget: "100k",
-          keywords: ["IT"],
-        },
-      ],
-      certificates: ["ISO 27001"],
-    },
-    preferences: {
-      alertEmail: true,
-      alertSlack: false,
-      alertFrequency: "Täglich",
-      minMatchScore: 70,
-      budgetRange: [50000, 500000],
-      consent: false,
-    },
-  };
+const defaultState: Omit<
+  ProfileState,
+  "setStep" | "setBasics" | "setReferences" | "setPreferences" | "reset"
+> = {
+  currentStep: 0,
+  basics: {
+    companyName: "",
+    industry: "",
+    cpvCodes: [],
+    employeeCount: "",
+    location: "",
+    revenueTier: 1,
+    contactName: "",
+    contactEmail: "",
+    website: "",
+    isAvpq: false,
+  },
+  references: {
+    documents: [],
+    references: [],
+    certificates: [],
+  },
+  preferences: {
+    alertEmail: true,
+    alertSlack: false,
+    alertFrequency: "Täglich",
+    minMatchScore: 70,
+    budgetRange: [50000, 500000],
+    regions: [],
+    consent: false,
+  },
+};
 
 export const useProfileStore = create<ProfileState>()(
   persist(
@@ -115,7 +113,7 @@ export const useProfileStore = create<ProfileState>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? localStorage : fallbackStorage
       ),
-      version: 1,
+      version: 2, // Incremented version due to schema changes
       partialize: (state) => ({
         currentStep: state.currentStep,
         basics: state.basics,
