@@ -1,39 +1,42 @@
-import React from 'react';
+import React from "react";
 import { TenderCard } from "@/components/dashboard/TenderCard";
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Filter, SlidersHorizontal } from "lucide-react";
+
+const tenders = [
+  {
+    title: "Sanierung Schulturnhalle - Gewerk Elektro",
+    href: "/dashboard/tenders/turnhalle-elektro",
+    matchScore: 94,
+    location: "Muenchen (12km)",
+    budget: "150.000 EUR (geschaetzt)",
+    deadline: "Noch 8 Tage",
+    reason: "Ausschreibung fordert 'KNX-Systeme', was in Ihrem Profil als Kernkompetenz hinterlegt ist.",
+    tags: ["Elektro", "Sanierung", "Oeffentlich"]
+  },
+  {
+    title: "Neubau Verwaltungsgebaeude - IT-Infrastruktur",
+    href: "/dashboard/tenders/it-infrastruktur",
+    matchScore: 88,
+    location: "Augsburg (45km)",
+    budget: "450.000 EUR (geschaetzt)",
+    deadline: "Noch 14 Tage",
+    reason: "Gute Uebereinstimmung mit Ihren Referenzprojekten im Bereich Netzwerktechnik.",
+    tags: ["IT", "Netzwerk", "Neubau"]
+  },
+  {
+    title: "Wartungsvertrag Strassenbeleuchtung 2025-2028",
+    href: "/dashboard/tenders/strassenbeleuchtung",
+    matchScore: 72,
+    location: "Landkreis Dachau (25km)",
+    budget: "Unbekannt",
+    deadline: "Noch 5 Tage",
+    reason: "Regionale Naehe passt, aber geforderte Zertifizierung 'DIN VDE 0100' fehlt im Profil.",
+    tags: ["Wartung", "Elektro", "Infrastruktur"]
+  }
+];
 
 export default function DashboardPage() {
-  const tenders = [
-    {
-      title: "Sanierung Schulturnhalle - Gewerk Elektro",
-      matchScore: 94,
-      location: "München (12km)",
-      budget: "150.000 € (geschätzt)",
-      deadline: "Noch 8 Tage",
-      reason: "Ausschreibung fordert 'KNX-Systeme', was in Ihrem Profil als Kernkompetenz hinterlegt ist.",
-      tags: ["Elektro", "Sanierung", "Öffentlich"]
-    },
-    {
-      title: "Neubau Verwaltungsgebäude - IT-Infrastruktur",
-      matchScore: 88,
-      location: "Augsburg (45km)",
-      budget: "450.000 € (geschätzt)",
-      deadline: "Noch 14 Tage",
-      reason: "Gute Übereinstimmung mit Ihren Referenzprojekten im Bereich Netzwerktechnik.",
-      tags: ["IT", "Netzwerk", "Neubau"]
-    },
-    {
-      title: "Wartungsvertrag Straßenbeleuchtung 2025-2028",
-      matchScore: 72,
-      location: "Landkreis Dachau (25km)",
-      budget: "Unbekannt",
-      deadline: "Noch 5 Tage",
-      reason: "Regionale Nähe passt, aber geforderte Zertifizierung 'DIN VDE 0100' fehlt im Profil.",
-      tags: ["Wartung", "Elektro", "Infrastruktur"]
-    }
-  ];
-
   return (
     <div className="space-y-8">
       
@@ -41,7 +44,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy-950">Opportunity Feed</h1>
-          <p className="text-slate-500">Wir haben heute 3 neue relevante Ausschreibungen für Sie gefunden.</p>
+          <p className="text-slate-500">Wir haben heute 3 neue relevante Ausschreibungen fuer Sie gefunden.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="text-slate-600 bg-white">

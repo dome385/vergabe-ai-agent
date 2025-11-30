@@ -1,11 +1,13 @@
-import React from 'react';
+import React from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Euro, Clock, Brain, ChevronRight, X } from 'lucide-react';
+import { MapPin, Euro, Clock, Brain, ChevronRight, X } from "lucide-react";
 
 interface TenderCardProps {
   title: string;
+  href: string;
   matchScore: number;
   location: string;
   budget: string;
@@ -56,7 +58,7 @@ const MatchScoreRing = ({ score }: { score: number }) => {
   );
 };
 
-export const TenderCard = ({ title, matchScore, location, budget, deadline, reason, tags }: TenderCardProps) => {
+export const TenderCard = ({ title, href, matchScore, location, budget, deadline, reason, tags }: TenderCardProps) => {
   return (
     <Card className="hover:shadow-md transition-shadow border-slate-200">
       <CardContent className="p-6 flex flex-col md:flex-row gap-6 items-start">
@@ -107,9 +109,11 @@ export const TenderCard = ({ title, matchScore, location, budget, deadline, reas
 
         {/* Right: Actions */}
         <div className="flex md:flex-col gap-2 w-full md:w-auto mt-4 md:mt-0">
-          <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
-            Details prüfen
-            <ChevronRight className="ml-2 h-4 w-4" />
+          <Button asChild className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20">
+            <Link href={href}>
+              Details anzeigen
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
           <Button variant="ghost" className="flex-1 text-slate-400 hover:text-red-500 hover:bg-red-50">
             <X className="mr-2 h-4 w-4" />
