@@ -24,30 +24,34 @@ export const ROICalculator = () => {
   };
 
   return (
-    <section className="py-24 bg-navy-950 text-white">
-      <div className="container px-4 md:px-6 mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-white">
-            Was kostet Sie das Nichtstun?
+    <section className="py-32 bg-navy-950 text-white relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="container px-4 md:px-6 mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-white mb-6">
+            Was kostet Sie das <span className="text-emerald-400">Nichtstun?</span>
           </h2>
-          <p className="mt-4 text-slate-400">
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
             Berechnen Sie Ihr ungenutztes Potenzial im öffentlichen Sektor.
           </p>
         </div>
 
-        <Card className="max-w-4xl mx-auto bg-slate-900 border-slate-800 text-white">
-          <CardHeader>
-            <CardTitle className="text-xl text-center text-slate-200">
+        <Card className="max-w-5xl mx-auto bg-slate-900/50 border-slate-800 text-white backdrop-blur-sm shadow-2xl shadow-black/50">
+          <CardHeader className="border-b border-slate-800 p-8">
+            <CardTitle className="text-xl text-center text-slate-200 font-medium">
               Ihre Unternehmensdaten
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-12">
-            <div className="grid md:grid-cols-2 gap-12">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Jahresumsatz</label>
-                  <div className="text-2xl font-bold text-emerald-400">
-                    {formatCurrency(revenue[0])}
+          <CardContent className="p-8 md:p-12 space-y-12">
+            <div className="grid md:grid-cols-2 gap-16">
+              <div className="space-y-10">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-baseline">
+                    <label className="text-sm font-medium text-slate-400 uppercase tracking-wider">Jahresumsatz</label>
+                    <div className="text-2xl font-bold text-emerald-400 font-mono">
+                      {formatCurrency(revenue[0])}
+                    </div>
                   </div>
                   <Slider
                     value={revenue}
@@ -55,14 +59,18 @@ export const ROICalculator = () => {
                     min={500000}
                     max={10000000}
                     step={100000}
-                    className="py-4"
+                    className="py-4 cursor-pointer"
                   />
+                  <div className="flex justify-between text-xs text-slate-500 font-mono">
+                    <span>500 T€</span>
+                    <span>10 Mio €</span>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Branche</label>
+                <div className="space-y-4">
+                  <label className="text-sm font-medium text-slate-400 uppercase tracking-wider">Branche</label>
                   <Select value={industry} onValueChange={setIndustry}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white h-12 text-lg focus:ring-emerald-500/50">
                       <SelectValue placeholder="Wählen Sie Ihre Branche" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-700 text-white">
@@ -75,20 +83,20 @@ export const ROICalculator = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center space-y-6 bg-slate-950/50 p-6 rounded-xl border border-slate-800">
-                <div className="text-center">
-                  <p className="text-sm text-slate-400 mb-1">Basierend auf Daten von 2024 verpassen Sie:</p>
-                  <div className="text-4xl font-bold text-white mb-2">
-                    {tendersPerWeek} <span className="text-lg font-normal text-slate-400">Ausschreibungen / Woche</span>
+              <div className="flex flex-col justify-center space-y-8 bg-gradient-to-br from-slate-900 to-slate-950 p-8 rounded-2xl border border-slate-800 shadow-inner">
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-slate-400 font-medium uppercase tracking-wider">Verpasste Chancen / Woche</p>
+                  <div className="text-5xl font-bold text-white">
+                    {tendersPerWeek}
                   </div>
                 </div>
-                
-                <div className="h-px bg-slate-800 w-full" />
 
-                <div className="text-center">
-                  <p className="text-sm text-slate-400 mb-1">Potenzielles Zusatzvolumen:</p>
-                  <div className="text-4xl font-bold text-emerald-500">
-                    {formatCurrency(potentialVolume)} <span className="text-lg font-normal text-slate-400">/ Jahr</span>
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent w-full" />
+
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-slate-400 font-medium uppercase tracking-wider">Potenzielles Zusatzvolumen / Jahr</p>
+                  <div className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">
+                    {formatCurrency(potentialVolume)}
                   </div>
                 </div>
               </div>
