@@ -48,11 +48,11 @@ export default function RegisterPage() {
                         <Label htmlFor="confirm-password">Passwort bestätigen</Label>
                         <Input id="confirm-password" type="password" />
                     </div>
-                    <div className="flex items-start space-x-2">
-                        <Checkbox id="terms" className="mt-1" />
+                    <div className="flex items-start gap-3">
+                        <Checkbox id="terms" className="mt-1 shrink-0" />
                         <Label
                             htmlFor="terms"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="flex-1 min-w-0 text-sm font-medium leading-relaxed text-muted-foreground flex-wrap peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
                             Ich stimme den{" "}
                             <Link href="#" className="text-primary hover:underline">
