@@ -12,7 +12,7 @@ export type BasicsFormData = {
   revenueTier: number;
   contactName: string;
   contactEmail: string;
-  website: string;
+  website?: string;
   isAvpq: boolean;
 };
 
@@ -55,14 +55,14 @@ type ProfileState = {
 
 const fallbackStorage: Storage = {
   length: 0,
-  clear: () => {},
+  clear: () => { },
   getItem: () => null,
   key: (index: number) => {
     void index;
     return null;
   },
-  removeItem: () => {},
-  setItem: () => {},
+  removeItem: () => { },
+  setItem: () => { },
 };
 
 const defaultState: Omit<

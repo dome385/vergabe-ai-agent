@@ -219,16 +219,15 @@ export const ReferencesStep = ({
 
   return (
     <Card className="rounded-2xl border-none bg-white shadow-2xl">
-      <CardHeader className="rounded-t-2xl bg-[#1E40AF] text-white">
-        <CardTitle className="flex items-center gap-3 text-xl">
-          <span className="text-3xl">📁</span>
-          Referenzen & Nachweise
-        </CardTitle>
-        <CardDescription className="text-blue-100">
-          Uploads erhöhen deinen Match-Score automatisch.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6 py-6">
+      <CardContent className="space-y-8 p-8">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            Referenzen & Nachweise
+          </h2>
+          <p className="text-slate-500">
+            Uploads erhöhen deinen Match-Score automatisch.
+          </p>
+        </div>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleValid, handleError)}
@@ -446,7 +445,7 @@ export const ReferencesStep = ({
                       onCheckedChange={() => toggleCertificate(cert)}
                       className={cn(
                         watchedCertificates.includes(cert) &&
-                          "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                        "data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                       )}
                     />
                     {cert}

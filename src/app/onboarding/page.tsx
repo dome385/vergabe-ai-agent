@@ -28,19 +28,16 @@ const wizardSteps = [
   {
     label: "Setup",
     helper: "Firmen-Basics",
-    emoji: "🏢",
     title: "Willkommen! Baue dein Profil für perfekte Matches auf.",
   },
   {
     label: "Referenzen",
     helper: "Uploads & Nachweise",
-    emoji: "📁",
     title: "Lade deine Erfolge hoch - Boost Matches um 40%.",
   },
   {
     label: "Feintuning",
     helper: "Preferences",
-    emoji: "⚙️",
     title: "Passe an & starte die Tender-Jagd!",
   },
 ] as const;
@@ -155,7 +152,7 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="text-sm font-semibold text-slate-600">
-                Step {currentStep + 1} / {totalSteps}
+                Schritt {currentStep + 1} / {totalSteps}
               </div>
             </div>
             <div className="mt-4">
