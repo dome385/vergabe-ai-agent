@@ -5,15 +5,24 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 export type BasicsFormData = {
   companyName: string;
+  legalForm: string;
+  taxId: string;
   industry: string;
   cpvCodes: string[];
   employeeCount: string;
-  location: string;
+  addressStreet: string;
+  addressZip: string;
+  addressCity: string;
+  addressCountry: string;
+  serviceRadius: number;
   revenueTier: number;
+  foundingYear: number;
   contactName: string;
   contactEmail: string;
-  website?: string;
+  contactPhone: string;
+  website: string;
   isAvpq: boolean;
+  profileSummary: string;
 };
 
 export type ReferenceEntry = {
@@ -72,15 +81,24 @@ const defaultState: Omit<
   currentStep: 0,
   basics: {
     companyName: "",
+    legalForm: "",
+    taxId: "",
     industry: "",
     cpvCodes: [],
     employeeCount: "",
-    location: "",
+    addressStreet: "",
+    addressZip: "",
+    addressCity: "",
+    addressCountry: "DE",
+    serviceRadius: 100,
     revenueTier: 1,
+    foundingYear: new Date().getFullYear(),
     contactName: "",
     contactEmail: "",
+    contactPhone: "",
     website: "",
     isAvpq: false,
+    profileSummary: "",
   },
   references: {
     documents: [],

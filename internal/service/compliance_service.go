@@ -41,7 +41,7 @@ func (s *ComplianceService) CheckCompliance(ctx context.Context, authUserID, ten
 	input := agent.ComplianceInput{
 		OCRText: tender.OCRCompressedText,
 		ProfileSummary: fmt.Sprintf("Firma: %s, Branche: %v, Referenzen: %s",
-			company.Name, company.IndustryTags, string(company.ReferencesJSON)),
+			company.Name, company.IndustryTags, string(company.ProjectReferences)),
 	}
 
 	assessment, err := s.complianceAgent.Assess(ctx, input)

@@ -52,15 +52,24 @@ import { TagInput } from "../ui/TagInput";
 
 const basicsSchema = z.object({
   companyName: z.string().min(2, "Firmenname erforderlich"),
+  legalForm: z.string().default(""),
+  taxId: z.string().default(""),
   industry: z.string().min(1, "Branche auswählen"),
   cpvCodes: z.array(z.string()).min(1, "Mindestens ein CPV-Code"),
   employeeCount: z.string().min(1, "Mitarbeiterzahl wählen"),
-  location: z.string().min(2, "Standort hinzufügen"),
+  addressStreet: z.string().default(""),
+  addressZip: z.string().min(5, "PLZ erforderlich"),
+  addressCity: z.string().min(2, "Stadt erforderlich"),
+  addressCountry: z.string().default("DE"),
+  serviceRadius: z.number().min(0).default(100),
   revenueTier: z.number().min(0).max(2),
+  foundingYear: z.coerce.number().min(1800).max(new Date().getFullYear() + 1).default(new Date().getFullYear()),
   contactName: z.string().min(2, "Kontaktperson ergänzen"),
   contactEmail: z.string().email("Gültige E-Mail eintragen"),
-  website: z.string().optional().or(z.literal("")),
+  contactPhone: z.string().default(""),
+  website: z.string().default(""),
   isAvpq: z.boolean(),
+  profileSummary: z.string().default(""),
 });
 
 const industryOptions = [
@@ -91,21 +100,21 @@ export const BasicsStep = ({
   registerSubmit,
 }: BasicsStepProps) => {
   const form = useForm<BasicsFormData>({
-    resolver: zodResolver(basicsSchema),
+    resolver: zodResolver(basicsSchema) as any,
     defaultValues: initialValues,
     mode: "onChange",
   });
 
   const industryWatch = form.watch("industry");
-  const locationWatch = form.watch("location");
+  const cityWatch = form.watch("addressCity");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const locationMatches = useMemo(() => {
-    if (!locationWatch) return locationHints;
+    if (!cityWatch) return locationHints;
     return locationHints.filter((hint) =>
-      hint.toLowerCase().includes(locationWatch.toLowerCase())
+      hint.toLowerCase().includes(cityWatch.toLowerCase())
     );
-  }, [locationWatch]);
+  }, [cityWatch]);
 
   const handleValid = useCallback(
     (values: BasicsFormData) => {
@@ -196,6 +205,35 @@ export const BasicsStep = ({
             <div className="grid gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
+                name="legalForm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel label="Rechtsform" tooltip="z.B. GmbH, AG" />
+                    <FormControl>
+                      <Input placeholder="GmbH" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="taxId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel label="USt-IdNr." tooltip="Für Rechnungen" />
+                    <FormControl>
+                      <Input placeholder="DE123456789" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
                 name="industry"
                 render={({ field }) => (
                   <FormItem>
@@ -273,90 +311,150 @@ export const BasicsStep = ({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem className="relative">
-                  <FieldLabel
-                    label="Hauptstandort (PLZ / Stadt)"
-                    tooltip="Für regionale Matches und Vergabestellen."
-                    icon={<MapPin className="h-4 w-4" />}
-                  />
-                  <FormControl>
-                    <Input
-                      placeholder="München, 80331"
-                      {...field}
-                      onFocus={() => setShowSuggestions(true)}
-                      onChange={(event) => {
-                        field.onChange(event);
-                        setShowSuggestions(true);
-                      }}
-                      onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 120)
-                      }
+            <div className="grid gap-6 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="addressStreet"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-3">
+                    <FieldLabel
+                      label="Straße & Hausnummer"
+                      tooltip="Firmensitz"
+                      icon={<MapPin className="h-4 w-4" />}
                     />
-                  </FormControl>
-                  {showSuggestions && locationMatches.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-blue-100 bg-white shadow-lg">
-                      {locationMatches.map((city) => (
-                        <button
-                          type="button"
-                          key={city}
-                          className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-blue-50"
-                          onClick={() => {
-                            form.setValue("location", city, {
-                              shouldValidate: true,
-                            });
-                            setShowSuggestions(false);
-                          }}
-                        >
-                          <MapPin className="h-4 w-4 text-blue-500" />
-                          <span>{city}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormControl>
+                      <Input placeholder="Musterstraße 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="addressZip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel label="PLZ" tooltip="Postleitzahl" />
+                    <FormControl>
+                      <Input placeholder="12345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="addressCity"
+                render={({ field }) => (
+                  <FormItem className="relative md:col-span-2">
+                    <FieldLabel label="Stadt" tooltip="Ort" />
+                    <FormControl>
+                      <Input
+                        placeholder="Musterstadt"
+                        {...field}
+                        onFocus={() => setShowSuggestions(true)}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          setShowSuggestions(true);
+                        }}
+                        onBlur={() =>
+                          setTimeout(() => setShowSuggestions(false), 120)
+                        }
+                      />
+                    </FormControl>
+                    {showSuggestions && locationMatches.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-blue-100 bg-white shadow-lg">
+                        {locationMatches.map((city) => (
+                          <button
+                            type="button"
+                            key={city}
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-blue-50"
+                            onClick={() => {
+                              form.setValue("addressCity", city, {
+                                shouldValidate: true,
+                              });
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            <MapPin className="h-4 w-4 text-blue-500" />
+                            <span>{city}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="revenueTier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel
+                      label="Jahresumsatz"
+                      tooltip="Hilft uns, Budgets mit deiner Kapazität zu matchen."
+                    />
+                    <FormControl>
+                      <div className="space-y-3 pt-2">
+                        <Slider
+                          min={0}
+                          max={2}
+                          step={1}
+                          value={[field.value || 0]}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className="py-2"
+                        />
+                        <div className="flex justify-between text-xs font-semibold text-slate-500">
+                          {revenueLabels.map((label, index) => (
+                            <span
+                              key={label}
+                              className={cn(
+                                "rounded-full px-2 py-0.5 transition-colors",
+                                field.value === index
+                                  ? "bg-blue-50 text-blue-700"
+                                  : "text-slate-400"
+                              )}
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="foundingYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel label="Gründungsjahr" tooltip="Seit wann existiert die Firma?" />
+                    <FormControl>
+                      <Input type="number" placeholder="2020" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
-              name="revenueTier"
+              name="profileSummary"
               render={({ field }) => (
                 <FormItem>
                   <FieldLabel
-                    label="Jahresumsatz"
-                    tooltip="Hilft uns, Budgets mit deiner Kapazität zu matchen."
+                    label="Kurzbeschreibung"
+                    tooltip="Was macht deine Firma besonders?"
                   />
                   <FormControl>
-                    <div className="space-y-3 pt-2">
-                      <Slider
-                        min={0}
-                        max={2}
-                        step={1}
-                        value={[field.value || 0]}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className="py-2"
-                      />
-                      <div className="flex justify-between text-xs font-semibold text-slate-500">
-                        {revenueLabels.map((label, index) => (
-                          <span
-                            key={label}
-                            className={cn(
-                              "rounded-full px-2 py-0.5 transition-colors",
-                              field.value === index
-                                ? "bg-blue-50 text-blue-700"
-                                : "text-slate-400"
-                            )}
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <Input placeholder="Wir sind spezialisiert auf..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -430,6 +528,22 @@ export const BasicsStep = ({
                 )}
               />
             </div>
+            <FormField
+                control={form.control}
+                name="contactPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldLabel
+                      label="Telefonnummer"
+                      tooltip="Für Rückfragen."
+                    />
+                    <FormControl>
+                      <Input placeholder="+49 123 456789" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
             <Button
               type="submit"
