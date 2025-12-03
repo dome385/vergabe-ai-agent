@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/cloudwego/eino/components/prompt"
@@ -26,10 +27,15 @@ type ComplianceAssessment struct {
 	Blockers   []string `json:"blockers" jsonschema:"description=Liste der fehlenden Dokumente oder K.O.-Kriterien."`
 }
 
+const DefaultOpenRouterBaseURL = "https://openrouter.ai/api/v1"
+
 type ComplianceAgentConfig struct {
 	APIKey      string
 	Model       string
+	BaseURL     string
 	Temperature float32
+	AppName     string
+	AppURL      string
 }
 
 type ComplianceAgent struct {
@@ -38,14 +44,21 @@ type ComplianceAgent struct {
 
 func NewComplianceAgent(ctx context.Context, cfg ComplianceAgentConfig) (*ComplianceAgent, error) {
 	if strings.TrimSpace(cfg.APIKey) == "" {
-		return nil, errors.New("missing OpenAI API key")
+		return nil, errors.New("missing OpenRouter API key")
 	}
 
-	modelName := cfg.Model
+	modelName := strings.TrimSpace(cfg.Model)
 	if modelName == "" {
-		modelName = "gpt-4o"
+		modelName = "openai/gpt-4o"
 	}
 	temp := cfg.Temperature
+
+	baseURL := strings.TrimSpace(cfg.BaseURL)
+	if baseURL == "" {
+		baseURL = DefaultOpenRouterBaseURL
+	}
+
+	httpClient := newHTTPClientWithHeaders(buildAttributionHeaders(cfg.AppURL, cfg.AppName))
 
 	// 1. Tool Definition (JSON Schema via Reflection)
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
@@ -62,7 +75,9 @@ func NewComplianceAgent(ctx context.Context, cfg ComplianceAgentConfig) (*Compli
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		APIKey:      cfg.APIKey,
 		Model:       modelName,
+		BaseURL:     baseURL,
 		Temperature: &temp,
+		HTTPClient:  httpClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("init chat model: %w", err)
@@ -140,4 +155,59 @@ func (a *ComplianceAgent) Assess(ctx context.Context, input ComplianceInput) (*C
 	}
 
 	return &result, nil
+}
+
+func buildAttributionHeaders(appURL, appName string) map[string]string {
+	headers := make(map[string]string, 2)
+
+	if value := strings.TrimSpace(appURL); value != "" {
+		headers["HTTP-Referer"] = value
+	}
+
+	if value := strings.TrimSpace(appName); value != "" {
+		headers["X-Title"] = value
+	}
+
+	if len(headers) == 0 {
+		return nil
+	}
+
+	return headers
+}
+
+func newHTTPClientWithHeaders(headers map[string]string) *http.Client {
+	if len(headers) == 0 {
+		return nil
+	}
+
+	return &http.Client{
+		Transport: &headerInjectorTransport{
+			base:    http.DefaultTransport,
+			headers: headers,
+		},
+	}
+}
+
+type headerInjectorTransport struct {
+	base    http.RoundTripper
+	headers map[string]string
+}
+
+func (h *headerInjectorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	rt := h.base
+	if rt == nil {
+		rt = http.DefaultTransport
+	}
+
+	clone := req.Clone(req.Context())
+	for key, value := range h.headers {
+		if value == "" {
+			continue
+		}
+		if clone.Header.Get(key) == "" {
+			clone.Header.Set(key, value)
+		}
+	}
+
+	return rt.RoundTrip(clone)
 }

@@ -27,9 +27,17 @@ func main() {
 
 	// 1. Config
 	dsn := os.Getenv("DATABASE_URL")
-	openAIKey := os.Getenv("OPENAI_API_KEY")
+	openAIKey := strings.TrimSpace(os.Getenv("OPENAI_API_KEY"))
 	hfToken := os.Getenv("HUGGINGFACE_TOKEN")
 	supabaseJWTSecret := os.Getenv("SUPABASE_JWT_SECRET")
+	openRouterKey := strings.TrimSpace(os.Getenv("OPENROUTER_API_KEY"))
+	if openRouterKey == "" {
+		openRouterKey = openAIKey
+	}
+	openRouterModel := strings.TrimSpace(os.Getenv("OPENROUTER_MODEL"))
+	openRouterBaseURL := strings.TrimSpace(os.Getenv("OPENROUTER_BASE_URL"))
+	openRouterAppName := os.Getenv("OPENROUTER_APP_NAME")
+	openRouterAppURL := os.Getenv("OPENROUTER_APP_URL")
 
 	if dsn == "" || supabaseJWTSecret == "" {
 		log.Fatal("Missing required environment variables: DATABASE_URL, SUPABASE_JWT_SECRET")
@@ -75,8 +83,11 @@ func main() {
 	}
 
 	complianceAgent, err := agent.NewComplianceAgent(context.Background(), agent.ComplianceAgentConfig{
-		APIKey:      openAIKey,
-		Model:       "gpt-4o",
+		APIKey:      openRouterKey,
+		Model:       openRouterModel,
+		BaseURL:     openRouterBaseURL,
+		AppName:     openRouterAppName,
+		AppURL:      openRouterAppURL,
 		Temperature: 0.2,
 	})
 	if err != nil {
