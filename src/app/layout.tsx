@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { AuthResetter } from "@/components/system/AuthResetter";
+import { getBuildId } from "@/lib/build-id";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -24,12 +26,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const buildId = getBuildId();
+
   return (
     <html lang="de" suppressHydrationWarning>
       <body
         className={`${plusJakarta.className} ${plusJakarta.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
+        <AuthResetter buildId={buildId} />
         {children}
       </body>
     </html>

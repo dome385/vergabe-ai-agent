@@ -1,13 +1,17 @@
 "use client"
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, FileText, Settings, Bell, LogOut } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase";
 
 export const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
 
   const navItems = [
     { icon: LayoutDashboard, label: "Opportunity Feed", href: "/dashboard" },
@@ -47,9 +51,23 @@ export const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-slate-800">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg hover:bg-slate-800 hover:text-white transition-all text-slate-400">
+        <button
+          onClick={async () => {
+            if (signingOut) return;
+            setSigningOut(true);
+            try {
+              await supabase.auth.signOut();
+            } finally {
+              router.push("/login");
+              router.refresh();
+              setSigningOut(false);
+            }
+          }}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-lg hover:bg-slate-800 hover:text-white transition-all text-slate-400 disabled:opacity-70"
+          disabled={signingOut}
+        >
           <LogOut className="h-5 w-5" />
-          <span className="font-medium">Abmelden</span>
+          <span className="font-medium">{signingOut ? "Wird abgemeldet..." : "Abmelden"}</span>
         </button>
       </div>
     </aside>

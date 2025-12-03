@@ -8,6 +8,7 @@ import { useSwipeable } from "react-swipeable";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast, Toaster } from "sonner";
 import { createClient } from "@/lib/supabase";
+import { fetchCompanyStatus } from "@/lib/company";
 
 import { Steps } from "@/components/ui/steps";
 import { Progress } from "@/components/ui/progress";
@@ -66,13 +67,24 @@ export default function OnboardingPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const checkSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push("/login");
+        return;
+      }
+
+      const { hasCompany, error } = await fetchCompanyStatus(supabase, session.user.id);
+      if (error) {
+        toast.error("Profilstatus konnte nicht geladen werden. Bitte versuche es erneut.");
+        return;
+      }
+
+      if (hasCompany) {
+        router.replace("/dashboard");
       }
     };
-    checkSession();
+    checkSessionAndProfile();
   }, [router, supabase]);
 
   const submitProfile = async (profileData: any) => {

@@ -1,8 +1,44 @@
-import React from 'react';
+"use client";
+
+import React, { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import Link from 'next/link';
+import { createClient } from "@/lib/supabase";
+import { fetchCompanyStatus } from "@/lib/company";
 
 export const Header = () => {
+  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
+
+  const handleAppStart = async () => {
+    if (checkingSession) return;
+    setCheckingSession(true);
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.push("/login");
+        return;
+      }
+
+      const { hasCompany, error } = await fetchCompanyStatus(supabase, data.session.user.id);
+      if (error) {
+        console.error("Failed to fetch company status", error);
+        router.push("/onboarding");
+        return;
+      }
+
+      router.push(hasCompany ? "/dashboard" : "/onboarding");
+    } catch (error) {
+      console.error("Failed to resolve session", error);
+      router.push("/login");
+    } finally {
+      setCheckingSession(false);
+    }
+  };
+
   return (
     <header
       data-scroll-lock-aware
@@ -33,16 +69,18 @@ export const Header = () => {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link href="/dashboard">
+          <Link href="/login">
             <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
               Login
             </Button>
           </Link>
-          <Link href="/dashboard">
-            <Button className="bg-white text-navy-950 hover:bg-emerald-50 font-semibold shadow-lg shadow-white/10 hover:shadow-white/20 transition-all hover:-translate-y-0.5">
-              App starten
-            </Button>
-          </Link>
+          <Button
+            onClick={handleAppStart}
+            disabled={checkingSession}
+            className="bg-white text-navy-950 hover:bg-emerald-50 font-semibold shadow-lg shadow-white/10 hover:shadow-white/20 transition-all hover:-translate-y-0.5 disabled:opacity-70"
+          >
+            {checkingSession ? "Bitte warten..." : "App starten"}
+          </Button>
         </div>
       </div>
     </header>

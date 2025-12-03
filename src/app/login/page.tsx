@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { fetchCompanyStatus } from "@/lib/company";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,18 +22,35 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        if (error) {
-            toast.error("Login fehlgeschlagen: " + error.message);
-            setLoading(false);
-        } else {
+            if (error) {
+                toast.error("Login fehlgeschlagen: " + error.message);
+                return;
+            }
+
+            const userId = data.user?.id;
+            if (!userId) {
+                toast.error("Konnte Benutzer-ID nicht bestimmen.");
+                return;
+            }
+
+            const { hasCompany, error: companyError } = await fetchCompanyStatus(supabase, userId);
+            if (companyError) {
+                console.error("Company lookup failed", companyError);
+                toast.error("Profilstatus konnte nicht geladen werden. Bitte versuche es erneut.");
+                return;
+            }
+
             toast.success("Erfolgreich eingeloggt!");
-            router.push("/onboarding");
+            router.push(hasCompany ? "/dashboard" : "/onboarding");
             router.refresh();
+        } finally {
+            setLoading(false);
         }
     };
 
