@@ -62,7 +62,12 @@ func main() {
 		log.Fatalf("Ingestion Service Init failed: %v", err)
 	}
 	matchingSvc := service.NewMatchingService(db)
-	// In main.go nach matchingSvc
+
+	companySvc, err := service.NewCompanyService(db, openAIKey)
+	if err != nil {
+		log.Fatalf("Company Service Init failed: %v", err)
+	}
+
 	complianceAgent, err := agent.NewComplianceAgent(context.Background(), agent.ComplianceAgentConfig{
 		APIKey:      openAIKey,
 		Model:       "gpt-4o",
@@ -80,6 +85,7 @@ func main() {
 	// 4. Handlers
 	ingestHandler := handler.NewIngestionHandler(ingestionSvc)
 	feedHandler := handler.NewFeedHandler(matchingSvc)
+	companyHandler := handler.NewCompanyHandler(companySvc)
 
 	// 5. Server
 	h := server.Default(
@@ -99,8 +105,8 @@ func main() {
 
 	api.POST("/ingest", ingestHandler.UploadFile)
 	api.GET("/feed", feedHandler.GetFeed)
-	// Route hinzufügen in api-Gruppe
 	api.POST("/analyze/:tenderId", complianceHandler.Analyze)
+	api.POST("/companies", companyHandler.Create)
 
 	log.Println("🚀 Server running on :8080")
 	if err := h.Run(); err != nil {

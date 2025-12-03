@@ -2,65 +2,63 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 const ContextUserIDKey = "user_id"
 
-// AuthMiddleware validates Supabase JWT tokens and injects the user id into the request context.
 func AuthMiddleware() app.HandlerFunc {
-	secret := os.Getenv("SUPABASE_JWT_SECRET")
 	return func(ctx context.Context, c *app.RequestContext) {
+		authHeader := string(c.GetHeader("Authorization"))
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"error": "Missing Authorization header"})
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"error": "Invalid Authorization header format"})
+			return
+		}
+
+		tokenString := parts[1]
+		secret := os.Getenv("SUPABASE_JWT_SECRET")
 		if secret == "" {
-			c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": "authentication misconfiguration",
-			})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": "Server misconfiguration"})
 			return
 		}
 
-		header := strings.TrimSpace(string(c.GetHeader(consts.HeaderAuthorization)))
-		if header == "" {
-			abortUnauthorized(c, "missing authorization header")
-			return
-		}
-
-		tokenString, ok := strings.CutPrefix(header, "Bearer ")
-		if !ok || strings.TrimSpace(tokenString) == "" {
-			abortUnauthorized(c, "invalid authorization header format")
-			return
-		}
-
-		claims := &jwt.RegisteredClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-				return nil, jwt.ErrTokenSignatureInvalid
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(secret), nil
 		})
+
 		if err != nil || !token.Valid {
-			abortUnauthorized(c, "invalid token")
-			return
-		}
-		if claims.Subject == "" {
-			abortUnauthorized(c, "missing subject in token")
+			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
 			return
 		}
 
-		c.Set(ContextUserIDKey, claims.Subject)
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
+			return
+		}
+
+		sub, ok := claims["sub"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, map[string]string{"error": "Token missing sub claim"})
+			return
+		}
+
+		c.Set(ContextUserIDKey, sub)
 		c.Next(ctx)
 	}
-}
-
-func abortUnauthorized(c *app.RequestContext, message string) {
-	c.JSON(http.StatusUnauthorized, map[string]string{
-		"error": message,
-	})
-	c.Abort()
 }

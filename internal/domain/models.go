@@ -19,6 +19,7 @@ type Company struct {
 	ServiceRadiusKM  int             `json:"service_radius_km"`
 	ProfileEmbedding pgvector.Vector `gorm:"type:vector(1536)" json:"profile_embedding"`
 	ReferencesJSON   json.RawMessage `gorm:"type:jsonb" json:"references_json"`
+	Settings         json.RawMessage `gorm:"type:jsonb" json:"settings"`
 
 	// PostGIS Felder (werden per DB Trigger befüllt, GORM soll sie nur lesen)
 	Longitude    float64     `gorm:"type:double precision" json:"longitude,omitempty"`
