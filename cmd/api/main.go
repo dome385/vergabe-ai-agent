@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -19,6 +21,10 @@ import (
 )
 
 func main() {
+	if err := loadEnvFiles(".env", "cmd/api/.env"); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+
 	// 1. Config
 	dsn := os.Getenv("DATABASE_URL")
 	openAIKey := os.Getenv("OPENAI_API_KEY")
@@ -112,4 +118,63 @@ func main() {
 	if err := h.Run(); err != nil {
 		log.Fatalf("Server stopped: %v", err)
 	}
+}
+
+func loadEnvFiles(paths ...string) error {
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+
+		if err := parseEnvFile(path); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func parseEnvFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		line = strings.TrimPrefix(line, "export ")
+		line = strings.TrimPrefix(line, "$env:")
+
+		kv := strings.SplitN(line, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(kv[0])
+		if key == "" {
+			continue
+		}
+
+		value := strings.TrimSpace(kv[1])
+		value = strings.Trim(value, `"'`)
+
+		if _, exists := os.LookupEnv(key); exists {
+			continue
+		}
+
+		if err := os.Setenv(key, value); err != nil {
+			return err
+		}
+	}
+
+	return scanner.Err()
 }
