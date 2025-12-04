@@ -12,38 +12,38 @@ import (
 // Company repräsentiert das Firmenprofil
 // Company repräsentiert das Firmenprofil
 type Company struct {
-	ID                 uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	AuthUserID         uuid.UUID       `gorm:"type:uuid;uniqueIndex" json:"auth_user_id"`
-	Name               string          `json:"name"`
-	LegalForm          string          `json:"legal_form"`
-	TaxID              string          `json:"tax_id"`
-	IndustryTags       pq.StringArray  `gorm:"type:text[]" json:"industry_tags"`
-	ContactName        string          `json:"contact_name"`
-	ContactEmail       string          `json:"contact_email"`
-	ContactPhone       string          `json:"contact_phone"`
-	AddressStreet      string          `json:"address_street"`
-	AddressZip         string          `json:"address_zip"`
-	AddressCity        string          `json:"address_city"`
-	AddressCountry     string          `gorm:"default:'DE'" json:"address_country"`
-	ServiceRadiusKM    int             `gorm:"default:100" json:"service_radius_km"`
-	Longitude          float64         `gorm:"type:double precision" json:"longitude,omitempty"`
-	Latitude           float64         `gorm:"type:double precision" json:"latitude,omitempty"`
-	LocationGeog       interface{}     `gorm:"type:geography(Point,4326);<-:false" json:"-"`
-	EmployeeCount      int             `json:"employee_count"`
-	AnnualRevenue      float64         `gorm:"type:numeric(12,2)" json:"annual_revenue"`
-	FoundingYear       int             `json:"founding_year"`
-	ProfileSummary     string          `json:"profile_summary"`
-	ProfileEmbedding   pgvector.Vector `gorm:"type:vector(100)" json:"profile_embedding"` // Changed to 100 dims as per SQL
-	Certifications     json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"certifications"`
-	ProjectReferences  json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"project_references"`
-	EmployeeCVs        json.RawMessage `gorm:"column:employee_cvs;type:jsonb;default:'[]'" json:"employee_cvs"`
-	FinancialDocuments json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"financial_documents"`
-	OnboardingCompleted bool           `gorm:"default:false" json:"onboarding_completed"`
-	SubscriptionTier   string          `gorm:"default:'free'" json:"subscription_tier"`
-	Settings           json.RawMessage `gorm:"type:jsonb;default:'{\"auto_generate\": false, \"notifications\": true}'" json:"settings"`
-	CreatedAt          time.Time       `gorm:"type:timestamptz;default:now()" json:"created_at"`
-	UpdatedAt          time.Time       `gorm:"type:timestamptz;default:now()" json:"updated_at"`
-	VerifiedAt         *time.Time      `gorm:"type:timestamptz" json:"verified_at"`
+	ID                  uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	AuthUserID          uuid.UUID       `gorm:"type:uuid;uniqueIndex" json:"auth_user_id"`
+	Name                string          `json:"name"`
+	LegalForm           string          `json:"legal_form"`
+	TaxID               string          `json:"tax_id"`
+	IndustryTags        pq.StringArray  `gorm:"type:text[]" json:"industry_tags"`
+	ContactName         string          `json:"contact_name"`
+	ContactEmail        string          `json:"contact_email"`
+	ContactPhone        string          `json:"contact_phone"`
+	AddressStreet       string          `json:"address_street"`
+	AddressZip          string          `json:"address_zip"`
+	AddressCity         string          `json:"address_city"`
+	AddressCountry      string          `gorm:"default:'DE'" json:"address_country"`
+	ServiceRadiusKM     int             `gorm:"default:100" json:"service_radius_km"`
+	Longitude           float64         `gorm:"type:double precision" json:"longitude,omitempty"`
+	Latitude            float64         `gorm:"type:double precision" json:"latitude,omitempty"`
+	LocationGeog        interface{}     `gorm:"type:geography(Point,4326);<-:false" json:"-"`
+	EmployeeCount       int             `json:"employee_count"`
+	AnnualRevenue       float64         `gorm:"type:numeric(12,2)" json:"annual_revenue"`
+	FoundingYear        int             `json:"founding_year"`
+	ProfileSummary      string          `json:"profile_summary"`
+	ProfileEmbedding    pgvector.Vector `gorm:"type:vector(1536)" json:"profile_embedding"` // Changed to 100 dims as per SQL
+	Certifications      json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"certifications"`
+	ProjectReferences   json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"project_references"`
+	EmployeeCVs         json.RawMessage `gorm:"column:employee_cvs;type:jsonb;default:'[]'" json:"employee_cvs"`
+	FinancialDocuments  json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"financial_documents"`
+	OnboardingCompleted bool            `gorm:"default:false" json:"onboarding_completed"`
+	SubscriptionTier    string          `gorm:"default:'free'" json:"subscription_tier"`
+	Settings            json.RawMessage `gorm:"type:jsonb;default:'{\"auto_generate\": false, \"notifications\": true}'" json:"settings"`
+	CreatedAt           time.Time       `gorm:"type:timestamptz;default:now()" json:"created_at"`
+	UpdatedAt           time.Time       `gorm:"type:timestamptz;default:now()" json:"updated_at"`
+	VerifiedAt          *time.Time      `gorm:"type:timestamptz" json:"verified_at"`
 }
 
 // Tender repräsentiert eine Ausschreibung
