@@ -51,11 +51,16 @@ import {
 import { ReferencesFormData, ReferenceEntry } from "@/stores/profile-store";
 import { cn } from "@/lib/utils";
 import { TagInput } from "../ui/TagInput";
+import { createClient } from "@/lib/supabase";
+
+const supabase = createClient();
 
 const documentSchema = z.object({
   id: z.string(),
   name: z.string(),
   size: z.number(),
+  path: z.string(),
+  type: z.string(),
 });
 
 const referenceRowSchema = z.object({
@@ -149,25 +154,47 @@ export const ReferencesStep = ({
   }, [form, registerSubmit, handleValid, handleError]);
 
   const handleDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    async (acceptedFiles: File[]) => {
       setIsUploading(true);
-      if (uploadTimeout.current) {
-        clearTimeout(uploadTimeout.current);
-      }
-      uploadTimeout.current = setTimeout(() => {
-        const mapped = [
-          ...acceptedFiles.map((file, index) => ({
-            id: `${file.name}-${index}`,
+
+      const newDocs = [];
+
+      for (const file of acceptedFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `certifications/${fileName}`;
+
+        try {
+          const { error } = await supabase.storage
+            .from('company-assets')
+            .upload(filePath, file);
+
+          if (error) {
+            console.error('Upload error:', error);
+            toast.error(`Fehler beim Upload von ${file.name}`);
+            continue;
+          }
+
+          newDocs.push({
+            id: `doc-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             name: file.name,
             size: file.size,
-          })),
-          { id: "synthetic-ref1", name: "referenzliste_2024.pdf", size: 32000 },
-          { id: "synthetic-iso", name: "iso_zertifikat.pdf", size: 45000 },
-        ];
-        form.setValue("documents", mapped, { shouldDirty: true });
-        toast.success("Dokumente erfolgreich analysiert!");
-        setIsUploading(false);
-      }, 1500);
+            path: filePath,
+            type: file.type
+          });
+        } catch (e) {
+          console.error('Upload exception:', e);
+          toast.error(`Fehler beim Upload von ${file.name}`);
+        }
+      }
+
+      if (newDocs.length > 0) {
+        const currentDocs = form.getValues("documents") || [];
+        form.setValue("documents", [...currentDocs, ...newDocs], { shouldDirty: true });
+        toast.success(`${newDocs.length} Dokument(e) erfolgreich hochgeladen!`);
+      }
+
+      setIsUploading(false);
     },
     [form]
   );

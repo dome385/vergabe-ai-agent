@@ -96,7 +96,9 @@ func (s *CompanyService) CreateCompany(ctx context.Context, input CompanyInput) 
 	}
 
 	// 2. Prepare JSONs
-	referencesJSON, _ := json.Marshal(input.References)
+	// 2. Prepare JSONs
+	projectReferencesJSON, _ := json.Marshal(input.References.References)
+	certificationsJSON, _ := json.Marshal(input.References.Documents)
 	settingsJSON, _ := json.Marshal(input.Preferences)
 
 	// Convert EmployeeCount string to int (approximate)
@@ -150,7 +152,8 @@ func (s *CompanyService) CreateCompany(ctx context.Context, input CompanyInput) 
 		FoundingYear:        input.Basics.FoundingYear,
 		ProfileSummary:      input.Basics.ProfileSummary,
 		ProfileEmbedding:    pgvector.NewVector(vector32),
-		ProjectReferences:   referencesJSON,
+		Certifications:      certificationsJSON,
+		ProjectReferences:   projectReferencesJSON,
 		Settings:            settingsJSON,
 		OnboardingCompleted: true,
 	}
@@ -186,6 +189,7 @@ func (s *CompanyService) CreateCompany(ctx context.Context, input CompanyInput) 
 				existing.FoundingYear = company.FoundingYear
 				existing.ProfileSummary = company.ProfileSummary
 				existing.ProfileEmbedding = company.ProfileEmbedding
+				existing.Certifications = company.Certifications
 				existing.ProjectReferences = company.ProjectReferences
 				existing.Settings = company.Settings
 				existing.OnboardingCompleted = true

@@ -35,7 +35,7 @@ export type ReferenceEntry = {
 };
 
 export type ReferencesFormData = {
-  documents: { id: string; name: string; size: number }[];
+  documents: { id: string; name: string; size: number; path: string; type: string }[];
   references: ReferenceEntry[];
   certificates: string[];
 };

@@ -19,7 +19,7 @@ export async function fetchCompanyStatus(
   userId: string
 ): Promise<CompanyStatusResult> {
   const { data, error } = await supabase
-    .from<CompanyRecord>("companies")
+    .from("companies")
     .select("id, onboarding_completed")
     .eq("auth_user_id", userId)
     .maybeSingle();
