@@ -60,6 +60,15 @@ type EFormsContractNotice struct {
 		} `xml:"UBLExtension"`
 	} `xml:"UBLExtensions"`
 
+	// ContractingParty (alternative format for authority info)
+	ContractingParty struct {
+		Party struct {
+			PartyName struct {
+				Name string `xml:"Name"`
+			} `xml:"PartyName"`
+		} `xml:"Party"`
+	} `xml:"ContractingParty"`
+
 	// Tendering Process
 	TenderingProcess struct {
 		SubmissionMethodCode           string `xml:"SubmissionMethodCode"`
@@ -108,8 +117,15 @@ type EFormsContractNotice struct {
 				} `xml:"Attachment"`
 			} `xml:"CallForTendersDocumentReference"`
 		} `xml:"TenderingTerms"`
+		TenderingProcess struct {
+			TenderSubmissionDeadlinePeriod struct {
+				EndDate string `xml:"EndDate"`
+				EndTime string `xml:"EndTime"`
+			} `xml:"TenderSubmissionDeadlinePeriod"`
+		} `xml:"TenderingProcess"`
 		ProcurementProject struct {
 			Name                        string `xml:"Name"`
+			Description                 string `xml:"Description"`
 			ProcurementTypeCode         string `xml:"ProcurementTypeCode"`
 			MainCommodityClassification struct {
 				ItemClassificationCode string `xml:"ItemClassificationCode"`
@@ -117,9 +133,10 @@ type EFormsContractNotice struct {
 			RealizedLocation struct {
 				Description string `xml:"Description"`
 				Address     struct {
-					CityName   string `xml:"CityName"`
-					PostalZone string `xml:"PostalZone"`
-					Country    struct {
+					CityName             string `xml:"CityName"`
+					PostalZone           string `xml:"PostalZone"`
+					CountrySubentityCode string `xml:"CountrySubentityCode"`
+					Country              struct {
 						IdentificationCode string `xml:"IdentificationCode"`
 					} `xml:"Country"`
 				} `xml:"Address"`
@@ -128,7 +145,37 @@ type EFormsContractNotice struct {
 	} `xml:"ProcurementProjectLot"`
 }
 
+// validateNoticeType checks if the XML is a ContractNotice (accepted) or ContractAwardNotice (rejected)
+func (s *XMLParserService) validateNoticeType(xmlData []byte) error {
+	// Simple struct to detect root element
+	type RootDetector struct {
+		XMLName xml.Name
+	}
+
+	var root RootDetector
+	if err := xml.Unmarshal(xmlData, &root); err != nil {
+		return fmt.Errorf("ungültiges XML-Format: %w", err)
+	}
+
+	// Check root element local name
+	switch root.XMLName.Local {
+	case "ContractNotice":
+		return nil // Accepted
+	case "ContractAwardNotice":
+		return fmt.Errorf("ContractAwardNotice (Vergabebekanntmachung) wird nicht unterstützt. Nur ContractNotice (Ausschreibung) kann hochgeladen werden")
+	case "PriorInformationNotice":
+		return fmt.Errorf("PriorInformationNotice (Vorinformation) wird nicht unterstützt. Nur ContractNotice (Ausschreibung) kann hochgeladen werden")
+	default:
+		return fmt.Errorf("unbekannter XML-Typ: %s. Nur ContractNotice (Ausschreibung) wird unterstützt", root.XMLName.Local)
+	}
+}
+
 func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, error) {
+	// Pre-validate: Only accept ContractNotice, reject ContractAwardNotice
+	if err := s.validateNoticeType(xmlData); err != nil {
+		return nil, err
+	}
+
 	var eforms EFormsContractNotice
 	if err := xml.Unmarshal(xmlData, &eforms); err != nil {
 		return nil, fmt.Errorf("XML parsing failed: %w", err)
@@ -202,8 +249,15 @@ func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, erro
 }
 
 func (s *XMLParserService) parseDeadline(eforms EFormsContractNotice) time.Time {
+	// Try main TenderingProcess first
 	endDate := eforms.TenderingProcess.TenderSubmissionDeadlinePeriod.EndDate
 	endTime := eforms.TenderingProcess.TenderSubmissionDeadlinePeriod.EndTime
+
+	// Fallback: ProcurementProjectLot.TenderingProcess
+	if endDate == "" {
+		endDate = eforms.ProcurementProjectLot.TenderingProcess.TenderSubmissionDeadlinePeriod.EndDate
+		endTime = eforms.ProcurementProjectLot.TenderingProcess.TenderSubmissionDeadlinePeriod.EndTime
+	}
 
 	if endDate == "" {
 		return time.Now().Add(14 * 24 * time.Hour)
@@ -253,6 +307,7 @@ func (s *XMLParserService) parsePublishedDate(eforms EFormsContractNotice) *time
 }
 
 func (s *XMLParserService) extractAuthorityInfo(eforms EFormsContractNotice) (name, address, zip, city string) {
+	// Try UBLExtensions first (full eForms format)
 	orgs := eforms.UBLExtensions.UBLExtension.ExtensionContent.EformsExtension.Organizations.Organization
 	if len(orgs) > 0 {
 		company := orgs[0].Company
@@ -261,7 +316,19 @@ func (s *XMLParserService) extractAuthorityInfo(eforms EFormsContractNotice) (na
 		address = postal.StreetName
 		zip = postal.PostalZone
 		city = postal.CityName
+		return
 	}
+
+	// Fallback: ContractingParty (simplified format)
+	if eforms.ContractingParty.Party.PartyName.Name != "" {
+		name = eforms.ContractingParty.Party.PartyName.Name
+	}
+
+	// Extract city from RealizedLocation
+	if eforms.ProcurementProject.RealizedLocation.Address.CityName != "" {
+		city = eforms.ProcurementProject.RealizedLocation.Address.CityName
+	}
+
 	return
 }
 
