@@ -36,7 +36,7 @@ type Company struct {
 	ProfileEmbedding   pgvector.Vector `gorm:"type:vector(100)" json:"profile_embedding"` // Changed to 100 dims as per SQL
 	Certifications     json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"certifications"`
 	ProjectReferences  json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"project_references"`
-	EmployeeCVs        json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"employee_cvs"`
+	EmployeeCVs        json.RawMessage `gorm:"column:employee_cvs;type:jsonb;default:'[]'" json:"employee_cvs"`
 	FinancialDocuments json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"financial_documents"`
 	OnboardingCompleted bool           `gorm:"default:false" json:"onboarding_completed"`
 	SubscriptionTier   string          `gorm:"default:'free'" json:"subscription_tier"`
