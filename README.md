@@ -27,7 +27,7 @@ Eine KI-gestützte Plattform, die Unternehmen dabei unterstützt, relevante öff
 
 Der **Vergabe AI Agent** ist eine Full-Stack-Anwendung, die aus einem **Go-Backend** (Hertz Framework) und einem **Next.js 16 Frontend** (React 19) besteht. Die Plattform nutzt:
 
-- **OpenAI Embeddings** für semantisches Matching zwischen Firmenprofilen und Ausschreibungen
+- **OpenRouter Embeddings (OpenAI-kompatibel)** für semantisches Matching zwischen Firmenprofilen und Ausschreibungen
 - **PostgreSQL mit pgvector** für Vektor-Suche
 - **PostGIS** für geografisches Matching (Service-Radius)
 - **Supabase** für Authentifizierung
@@ -95,7 +95,7 @@ Der **Vergabe AI Agent** ist eine Full-Stack-Anwendung, die aus einem **Go-Backe
 - **Features**:
   - ✅ PDF-Upload → OCR (Hugging Face) → Text-Extraktion
   - ✅ XML-Upload → UBL-Parsing → Metadaten-Extraktion
-  - ✅ Automatische Embedding-Generierung (OpenAI `text-embedding-3-small`)
+  - ✅ Automatische Embedding-Generierung (OpenRouter `text-embedding-3-small`, konfigurierbar via `OPENROUTER_EMBEDDING_MODEL`)
   - ✅ Speichern in `tenders` Tabelle
   - ⚠️ OCR-Service ist implementiert, aber keine Echtzeitverarbeitung (kein Hugging Face API tatsächlich getestet)
 
@@ -205,7 +205,7 @@ Der **Vergabe AI Agent** ist eine Full-Stack-Anwendung, die aus einem **Go-Backe
 | GORM | 1.25.5 | ORM |
 | pgvector-go | 0.3.0 | Vektor Operations |
 | Eino | 0.6.0 | AI Framework |
-| OpenAI Client | Custom | Embeddings |
+| OpenRouter Client | Custom | Embeddings |
 | JWT | 5.3.0 | Token Validation |
 
 ### Datenbank
@@ -218,7 +218,7 @@ Der **Vergabe AI Agent** ist eine Full-Stack-Anwendung, die aus einem **Go-Backe
 ### KI/ML
 | Service | Verwendung |
 |---------|-----------|
-| OpenAI API | `text-embedding-3-small` (1536 dims) |
+| OpenRouter Embeddings API | `text-embedding-3-small` (1536 dims, konfigurierbar) |
 | OpenRouter | LLM API (gpt-4o für Compliance) |
 | Hugging Face | OCR (theoretisch, nicht getestet) |
 
@@ -298,8 +298,7 @@ vergabe-ai-agent/
   ```
 - **Supabase Projekt** (oder PostgreSQL + eigenes Auth-System)
 - **API Keys**:
-  - OpenAI API Key (für Embeddings)
-  - OpenRouter API Key (für Compliance LLM)
+  - OpenRouter API Key (für Embeddings + Compliance LLM)
   - Hugging Face Token (für OCR)
 
 ### Backend Setup
@@ -315,8 +314,8 @@ vergabe-ai-agent/
 ```bash
 DATABASE_URL=postgres://user:pass@localhost:5432/vergabe_agent
 SUPABASE_JWT_SECRET=your-supabase-jwt-secret
-OPENAI_API_KEY=sk-...
 OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_EMBEDDING_MODEL=text-embedding-3-small
 OPENROUTER_MODEL=openai/gpt-4o
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_APP_NAME=Vergabe-Agent
@@ -483,7 +482,7 @@ npm run dev
 | `onboarding_completed` | BOOLEAN | Onboarding-Status |
 | `certifications`, `project_references` | JSONB | Dokumente |
 
-**⚠️ BUG**: `profile_embedding` ist als `vector(100)` definiert, aber OpenAI liefert 1536 Dimensionen!  
+**⚠️ BUG**: `profile_embedding` ist als `vector(100)` definiert, aber OpenRouter (OpenAI-kompatibel) liefert 1536 Dimensionen!  
 **Fix**: Schema-Migration zu `vector(1536)` nötig.
 
 ### `tenders` Tabelle
@@ -688,11 +687,11 @@ DATABASE_URL=postgres://user:pass@localhost:5432/vergabe_agent
 # Supabase
 SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 
-# OpenAI (für Embeddings)
-OPENAI_API_KEY=sk-...
+# OpenRouter (für Embeddings & Agents)
 
 # OpenRouter (für Compliance LLM)
 OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_EMBEDDING_MODEL=text-embedding-3-small
 OPENROUTER_MODEL=openai/gpt-4o
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_APP_NAME=Vergabe-Agent

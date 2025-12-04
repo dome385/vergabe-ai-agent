@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/cloudwego/eino/components/prompt"
@@ -13,6 +12,7 @@ import (
 	"github.com/eino-contrib/jsonschema"
 
 	openai "github.com/cloudwego/eino-ext/components/model/openai"
+	orclient "github.com/vergabe-agent/vergabe-backend/internal/openrouter"
 )
 
 // ComplianceInput enthält OCR-Text und Profil.
@@ -26,8 +26,6 @@ type ComplianceAssessment struct {
 	IsFeasible bool     `json:"is_feasible" jsonschema:"description=Ist die Bewerbung machbar?"`
 	Blockers   []string `json:"blockers" jsonschema:"description=Liste der fehlenden Dokumente oder K.O.-Kriterien."`
 }
-
-const DefaultOpenRouterBaseURL = "https://openrouter.ai/api/v1"
 
 type ComplianceAgentConfig struct {
 	APIKey      string
@@ -55,10 +53,10 @@ func NewComplianceAgent(ctx context.Context, cfg ComplianceAgentConfig) (*Compli
 
 	baseURL := strings.TrimSpace(cfg.BaseURL)
 	if baseURL == "" {
-		baseURL = DefaultOpenRouterBaseURL
+		baseURL = orclient.DefaultBaseURL
 	}
 
-	httpClient := newHTTPClientWithHeaders(buildAttributionHeaders(cfg.AppURL, cfg.AppName))
+	httpClient := orclient.NewHTTPClient(cfg.AppURL, cfg.AppName)
 
 	// 1. Tool Definition (JSON Schema via Reflection)
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
@@ -155,59 +153,4 @@ func (a *ComplianceAgent) Assess(ctx context.Context, input ComplianceInput) (*C
 	}
 
 	return &result, nil
-}
-
-func buildAttributionHeaders(appURL, appName string) map[string]string {
-	headers := make(map[string]string, 2)
-
-	if value := strings.TrimSpace(appURL); value != "" {
-		headers["HTTP-Referer"] = value
-	}
-
-	if value := strings.TrimSpace(appName); value != "" {
-		headers["X-Title"] = value
-	}
-
-	if len(headers) == 0 {
-		return nil
-	}
-
-	return headers
-}
-
-func newHTTPClientWithHeaders(headers map[string]string) *http.Client {
-	if len(headers) == 0 {
-		return nil
-	}
-
-	return &http.Client{
-		Transport: &headerInjectorTransport{
-			base:    http.DefaultTransport,
-			headers: headers,
-		},
-	}
-}
-
-type headerInjectorTransport struct {
-	base    http.RoundTripper
-	headers map[string]string
-}
-
-func (h *headerInjectorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	rt := h.base
-	if rt == nil {
-		rt = http.DefaultTransport
-	}
-
-	clone := req.Clone(req.Context())
-	for key, value := range h.headers {
-		if value == "" {
-			continue
-		}
-		if clone.Header.Get(key) == "" {
-			clone.Header.Set(key, value)
-		}
-	}
-
-	return rt.RoundTrip(clone)
 }

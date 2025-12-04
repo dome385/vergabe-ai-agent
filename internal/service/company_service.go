@@ -18,12 +18,9 @@ type CompanyService struct {
 	embedder *openaiembed.Embedder
 }
 
-func NewCompanyService(db *gorm.DB, openAIKey string) (*CompanyService, error) {
+func NewCompanyService(db *gorm.DB, embedCfg EmbeddingProviderConfig) (*CompanyService, error) {
 	ctx := context.Background()
-	emb, err := openaiembed.NewEmbedder(ctx, &openaiembed.EmbeddingConfig{
-		APIKey: openAIKey,
-		Model:  "text-embedding-3-small",
-	})
+	emb, err := newEmbeddingClient(ctx, embedCfg)
 	if err != nil {
 		return nil, fmt.Errorf("init embedder failed: %w", err)
 	}

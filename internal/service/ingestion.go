@@ -22,12 +22,9 @@ type IngestionService struct {
 	ocrService *OCRService
 }
 
-func NewIngestionService(db *gorm.DB, openAIKey, hfToken string) (*IngestionService, error) {
+func NewIngestionService(db *gorm.DB, hfToken string, embedCfg EmbeddingProviderConfig) (*IngestionService, error) {
 	ctx := context.Background()
-	emb, err := openaiembed.NewEmbedder(ctx, &openaiembed.EmbeddingConfig{
-		APIKey: openAIKey,
-		Model:  "text-embedding-3-small",
-	})
+	emb, err := newEmbeddingClient(ctx, embedCfg)
 	if err != nil {
 		return nil, fmt.Errorf("init embedder failed: %w", err)
 	}

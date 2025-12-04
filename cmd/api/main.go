@@ -27,17 +27,23 @@ func main() {
 
 	// 1. Config
 	dsn := os.Getenv("DATABASE_URL")
-	openAIKey := strings.TrimSpace(os.Getenv("OPENAI_API_KEY"))
 	hfToken := os.Getenv("HUGGINGFACE_TOKEN")
 	supabaseJWTSecret := os.Getenv("SUPABASE_JWT_SECRET")
 	openRouterKey := strings.TrimSpace(os.Getenv("OPENROUTER_API_KEY"))
-	if openRouterKey == "" {
-		openRouterKey = openAIKey
-	}
 	openRouterModel := strings.TrimSpace(os.Getenv("OPENROUTER_MODEL"))
 	openRouterBaseURL := strings.TrimSpace(os.Getenv("OPENROUTER_BASE_URL"))
 	openRouterAppName := os.Getenv("OPENROUTER_APP_NAME")
 	openRouterAppURL := os.Getenv("OPENROUTER_APP_URL")
+
+	openRouterEmbeddingModel := strings.TrimSpace(os.Getenv("OPENROUTER_EMBEDDING_MODEL"))
+
+	embeddingCfg := service.EmbeddingProviderConfig{
+		APIKey:  openRouterKey,
+		Model:   openRouterEmbeddingModel,
+		BaseURL: openRouterBaseURL,
+		AppName: openRouterAppName,
+		AppURL:  openRouterAppURL,
+	}
 
 	if dsn == "" || supabaseJWTSecret == "" {
 		log.Fatal("Missing required environment variables: DATABASE_URL, SUPABASE_JWT_SECRET")
@@ -71,13 +77,13 @@ func main() {
 	defer sqlDB.Close()
 
 	// 3. Services
-	ingestionSvc, err := service.NewIngestionService(db, openAIKey, hfToken)
+	ingestionSvc, err := service.NewIngestionService(db, hfToken, embeddingCfg)
 	if err != nil {
 		log.Fatalf("Ingestion Service Init failed: %v", err)
 	}
 	matchingSvc := service.NewMatchingService(db)
 
-	companySvc, err := service.NewCompanyService(db, openAIKey)
+	companySvc, err := service.NewCompanyService(db, embeddingCfg)
 	if err != nil {
 		log.Fatalf("Company Service Init failed: %v", err)
 	}
