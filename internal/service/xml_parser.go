@@ -87,6 +87,9 @@ type EFormsContractNotice struct {
 		MainCommodityClassification struct {
 			ItemClassificationCode string `xml:"ItemClassificationCode"`
 		} `xml:"MainCommodityClassification"`
+		AdditionalCommodityClassification []struct {
+			ItemClassificationCode string `xml:"ItemClassificationCode"`
+		} `xml:"AdditionalCommodityClassification"`
 		RealizedLocation struct {
 			Description string `xml:"Description"`
 			Address     struct {
@@ -130,6 +133,9 @@ type EFormsContractNotice struct {
 			MainCommodityClassification struct {
 				ItemClassificationCode string `xml:"ItemClassificationCode"`
 			} `xml:"MainCommodityClassification"`
+			AdditionalCommodityClassification []struct {
+				ItemClassificationCode string `xml:"ItemClassificationCode"`
+			} `xml:"AdditionalCommodityClassification"`
 			RealizedLocation struct {
 				Description string `xml:"Description"`
 				Address     struct {
@@ -199,11 +205,23 @@ func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, erro
 	// Extract award criteria
 	awardCriteria := s.extractAwardCriteria(eforms)
 
+	// Extract NUTS codes
+	nutsCodes := s.extractNutsCodes(eforms)
+
 	// Build description text
 	description := eforms.ProcurementProject.Description
 	descriptionFull := description
 	if eforms.ProcurementProjectLot.ProcurementProject.Name != "" {
 		descriptionFull = fmt.Sprintf("%s\n\nLos: %s", description, eforms.ProcurementProjectLot.ProcurementProject.Name)
+	}
+
+	// Parse location (handles "84034 Landshut" format)
+	parsedZip, parsedCity := s.parseLocationFromCity(locationCity)
+	if parsedZip != "" && locationZip == "" {
+		locationZip = parsedZip
+	}
+	if parsedCity != "" {
+		locationCity = parsedCity
 	}
 
 	now := time.Now()
@@ -217,6 +235,7 @@ func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, erro
 		DescriptionFull:   descriptionFull,
 		OCRCompressedText: description,
 		CPVCodes:          cpvCodes,
+		NutsCodes:         nutsCodes,
 		ProcedureType:     eforms.ProcurementProject.ProcurementTypeCode,
 		AwardCriteria:     awardCriteria,
 		PublishedAt:       publishedAt,
@@ -335,14 +354,28 @@ func (s *XMLParserService) extractAuthorityInfo(eforms EFormsContractNotice) (na
 func (s *XMLParserService) extractCPVCodes(eforms EFormsContractNotice) []string {
 	var codes []string
 
-	// From lot
+	// From lot - main
 	if code := eforms.ProcurementProjectLot.ProcurementProject.MainCommodityClassification.ItemClassificationCode; code != "" {
 		codes = append(codes, code)
 	}
 
-	// From main project
+	// From lot - additional
+	for _, acc := range eforms.ProcurementProjectLot.ProcurementProject.AdditionalCommodityClassification {
+		if acc.ItemClassificationCode != "" && !contains(codes, acc.ItemClassificationCode) {
+			codes = append(codes, acc.ItemClassificationCode)
+		}
+	}
+
+	// From main project - main
 	if code := eforms.ProcurementProject.MainCommodityClassification.ItemClassificationCode; code != "" && !contains(codes, code) {
 		codes = append(codes, code)
+	}
+
+	// From main project - additional
+	for _, acc := range eforms.ProcurementProject.AdditionalCommodityClassification {
+		if acc.ItemClassificationCode != "" && !contains(codes, acc.ItemClassificationCode) {
+			codes = append(codes, acc.ItemClassificationCode)
+		}
 	}
 
 	return codes
@@ -366,6 +399,52 @@ func (s *XMLParserService) extractAwardCriteria(eforms EFormsContractNotice) str
 		return criteria.Name
 	}
 	return criteria.AwardingCriterionTypeCode
+}
+
+func (s *XMLParserService) extractNutsCodes(eforms EFormsContractNotice) []string {
+	var codes []string
+
+	// From main project
+	if code := eforms.ProcurementProject.RealizedLocation.Address.CountrySubentityCode; code != "" {
+		codes = append(codes, code)
+	}
+
+	// From lot
+	if code := eforms.ProcurementProjectLot.ProcurementProject.RealizedLocation.Address.CountrySubentityCode; code != "" && !contains(codes, code) {
+		codes = append(codes, code)
+	}
+
+	return codes
+}
+
+// parseLocationFromCity handles combined formats like "84034 Landshut"
+func (s *XMLParserService) parseLocationFromCity(cityName string) (zip, city string) {
+	cityName = strings.TrimSpace(cityName)
+	if cityName == "" {
+		return "", ""
+	}
+
+	// Check if starts with digits (PLZ)
+	parts := strings.SplitN(cityName, " ", 2)
+	if len(parts) == 2 {
+		// Check if first part looks like a German PLZ (5 digits)
+		potentialZip := strings.TrimSpace(parts[0])
+		if len(potentialZip) == 5 && isNumeric(potentialZip) {
+			return potentialZip, strings.TrimSpace(parts[1])
+		}
+	}
+
+	// No PLZ found, return as city
+	return "", cityName
+}
+
+func isNumeric(s string) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func contains(slice []string, item string) bool {
