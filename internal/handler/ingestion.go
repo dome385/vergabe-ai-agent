@@ -43,9 +43,6 @@ func (h *IngestionHandler) UploadFile(ctx context.Context, c *app.RequestContext
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]any{
-		"status": "success",
-		"id":     tender.ID,
-		"title":  tender.Title,
-	})
+	// Return full tender for frontend preview
+	c.JSON(http.StatusOK, tender)
 }

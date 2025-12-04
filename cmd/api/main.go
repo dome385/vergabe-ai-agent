@@ -37,6 +37,10 @@ func main() {
 
 	openRouterEmbeddingModel := strings.TrimSpace(os.Getenv("OPENROUTER_EMBEDDING_MODEL"))
 
+	// Supabase Storage Config
+	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
+	supabaseServiceKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_KEY"))
+
 	embeddingCfg := service.EmbeddingProviderConfig{
 		APIKey:  openRouterKey,
 		Model:   openRouterEmbeddingModel,
@@ -110,6 +114,16 @@ func main() {
 	feedHandler := handler.NewFeedHandler(matchingSvc)
 	companyHandler := handler.NewCompanyHandler(companySvc)
 
+	// Storage Service (optional - still works without it)
+	var storageSvc *service.SupabaseStorageService
+	if supabaseURL != "" && supabaseServiceKey != "" {
+		storageSvc = service.NewSupabaseStorageService(supabaseURL, supabaseServiceKey)
+		log.Println("✅ Supabase Storage enabled")
+	} else {
+		log.Println("⚠️ Supabase Storage disabled (missing SUPABASE_URL or SUPABASE_SERVICE_KEY)")
+	}
+	tenderHandler := handler.NewTenderHandler(db, storageSvc)
+
 	// 5. Server
 	h := server.Default(
 		server.WithHostPorts(":8080"),
@@ -130,6 +144,12 @@ func main() {
 	api.GET("/feed", feedHandler.GetFeed)
 	api.POST("/analyze/:tenderId", complianceHandler.Analyze)
 	api.POST("/companies", companyHandler.Create)
+
+	// Tender routes
+	api.GET("/tenders", tenderHandler.ListTenders)
+	api.GET("/tenders/:tenderId/attachments", tenderHandler.GetTenderAttachments)
+	api.POST("/tenders/:tenderId/attachments", tenderHandler.UploadAttachment)
+	api.DELETE("/attachments/:attachmentId", tenderHandler.DeleteAttachment)
 
 	log.Println("🚀 Server running on :8080")
 	if err := h.Run(); err != nil {

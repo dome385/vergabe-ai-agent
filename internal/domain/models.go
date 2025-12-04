@@ -50,28 +50,38 @@ type Company struct {
 type Tender struct {
 	ID                   uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	ExternalID           string          `gorm:"uniqueIndex" json:"external_id"`
+	SourcePortal         string          `json:"source_portal"`
+	SourceURL            string          `json:"source_url"`
 	Title                string          `json:"title"`
+	Description          string          `json:"description"`
 	DescriptionFull      string          `json:"description_full"`
-	OCRCompressedText    string          `json:"ocr_compressed_text"`
-	Deadline             time.Time       `gorm:"type:timestamptz" json:"deadline"`
-	RegionZIP            string          `json:"region_zip"`
-	RequirementEmbedding pgvector.Vector `gorm:"type:vector(1536)" json:"requirement_embedding"`
+	OCRCompressedText    string          `gorm:"column:ocr_compressed_text" json:"ocr_compressed_text"`
 	CPVCodes             pq.StringArray  `gorm:"type:text[]" json:"cpv_codes"`
+	NutsCodes            pq.StringArray  `gorm:"type:text[];column:nutscodes" json:"nutscodes"`
+	ProcedureType        string          `json:"procedure_type"`
+	AwardCriteria        string          `json:"award_criteria"`
+	EstimatedValue       float64         `gorm:"type:numeric(20,2)" json:"estimated_value"`
+	Currency             string          `gorm:"default:'EUR'" json:"currency"`
+	BudgetType           string          `json:"budget_type"`
+	PublishedAt          *time.Time      `gorm:"type:timestamptz" json:"published_at"`
+	DeadlineAt           time.Time       `gorm:"column:deadline_at;type:timestamptz" json:"deadline_at"`
+	AwardAt              *time.Time      `gorm:"type:timestamptz" json:"award_at"`
+	AwardingAuthority    string          `json:"awarding_authority"`
+	AuthorityAddress     string          `json:"authority_address"`
+	LocationZip          string          `json:"location_zip"`
+	LocationCity         string          `json:"location_city"`
+	LocationGeog         interface{}     `gorm:"type:geography(Point,4326);<-:false" json:"-"`
+	RequirementEmbedding pgvector.Vector `gorm:"type:vector(1536)" json:"requirement_embedding"`
+	FilePath             string          `json:"file_path"`
+	ProcessingStatus     string          `gorm:"default:'pending'" json:"processing_status"`
+	OCRQualityScore      *float64        `gorm:"type:double precision" json:"ocr_quality_score"`
+	ParsingErrors        pq.StringArray  `gorm:"type:text[]" json:"parsing_errors"`
+	ScrapedAt            *time.Time      `gorm:"type:timestamptz" json:"scraped_at"`
+	CreatedAt            time.Time       `gorm:"type:timestamptz;default:now()" json:"created_at"`
 
-	// PostGIS
-	Longitude    float64     `gorm:"type:double precision" json:"longitude,omitempty"`
-	Latitude     float64     `gorm:"type:double precision" json:"latitude,omitempty"`
-	LocationCity string      `json:"location_city,omitempty"`
-	LocationGeom interface{} `gorm:"type:geography(Point,4326);<-:false" json:"-"`
-
-	// XML Metadaten
-	NoticeID            string     `json:"notice_id"`
-	ContractFolderID    string     `json:"contract_folder_id"`
-	ProcedureCode       string     `json:"procedure_code"`
-	ProcurementTypeCode string     `json:"procurement_type_code"`
-	XMLRaw              string     `gorm:"type:text" json:"xml_raw,omitempty"`
-	ParsedAt            *time.Time `gorm:"type:timestamptz" json:"parsed_at,omitempty"`
-	CreatedAt           time.Time  `gorm:"type:timestamptz;default:now()" json:"created_at"`
+	// Legacy fields for compatibility (mapped to new columns)
+	Deadline  time.Time `gorm:"-" json:"deadline,omitempty"`
+	RegionZIP string    `gorm:"-" json:"region_zip,omitempty"`
 }
 
 // Match repräsentiert das Ergebnis
@@ -99,4 +109,21 @@ type ComplianceCheck struct {
 	// Relationen (Optional, falls GORM Preloading genutzt wird)
 	Company Company `gorm:"foreignKey:CompanyID" json:"-"`
 	Tender  Tender  `gorm:"foreignKey:TenderID" json:"-"`
+}
+
+// TenderAttachment repräsentiert ein PDF/Dokument das zu einer Ausschreibung gehört
+type TenderAttachment struct {
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	TenderID     uuid.UUID `gorm:"type:uuid;index" json:"tender_id"`
+	Filename     string    `json:"filename"`
+	FileType     string    `json:"file_type"`
+	DocumentType string    `json:"document_type"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	StoragePath  string    `json:"storage_path"`
+	FileSize     int       `json:"file_size"`
+	CreatedAt    time.Time `gorm:"type:timestamptz;default:now()" json:"created_at"`
+
+	// Relation
+	Tender Tender `gorm:"foreignKey:TenderID" json:"-"`
 }
