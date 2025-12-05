@@ -151,7 +151,7 @@ func (s *OCRService) callDeepSeekOCR(imageBase64 string) (string, error) {
 
 	// OpenAI-compatible request format
 	reqBody := map[string]interface{}{
-		"model": "deepseek/deepseek-ai/DeepSeek-OCR",
+		"model": "deepseek/deepseek-ocr",
 		"messages": []map[string]interface{}{
 			{
 				"role": "user",
