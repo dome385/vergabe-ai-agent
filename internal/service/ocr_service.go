@@ -164,7 +164,7 @@ func (s *OCRService) callDeepSeekOCR(imageBase64 string) (string, error) {
 					},
 					{
 						"type": "text",
-						"text": "Convert the document to markdown. Extract all text accurately.",
+						"text": "<|grounding|>Convert the document to markdown.",
 					},
 				},
 			},
