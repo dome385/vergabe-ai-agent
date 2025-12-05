@@ -17,14 +17,16 @@ import (
 )
 
 type TenderHandler struct {
-	db      *gorm.DB
-	storage *service.SupabaseStorageService
+	db         *gorm.DB
+	storage    *service.SupabaseStorageService
+	ocrService *service.OCRService
 }
 
-func NewTenderHandler(db *gorm.DB, storage *service.SupabaseStorageService) *TenderHandler {
+func NewTenderHandler(db *gorm.DB, storage *service.SupabaseStorageService, ocrService *service.OCRService) *TenderHandler {
 	return &TenderHandler{
-		db:      db,
-		storage: storage,
+		db:         db,
+		storage:    storage,
+		ocrService: ocrService,
 	}
 }
 
@@ -179,6 +181,32 @@ func (h *TenderHandler) UploadAttachment(ctx context.Context, c *app.RequestCont
 		}
 		c.JSON(http.StatusInternalServerError, map[string]string{"error": "Speichern fehlgeschlagen: " + err.Error()})
 		return
+	}
+
+	// Run OCR for PDF files in background
+	if typeInfo.fileType == "pdf" && h.ocrService != nil {
+		go func() {
+			log.Printf("Starting OCR for attachment %s", attachment.ID)
+			ocrText, err := h.ocrService.ExtractFromPDF(fileBytes)
+			if err != nil {
+				log.Printf("OCR failed for attachment %s: %v", attachment.ID, err)
+				return
+			}
+
+			// Update attachment with OCR result
+			updateErr := h.db.Model(&domain.TenderAttachment{}).
+				Where("id = ?", attachment.ID).
+				Updates(map[string]interface{}{
+					"content_ocr":   ocrText,
+					"ocr_processed": true,
+				}).Error
+
+			if updateErr != nil {
+				log.Printf("Failed to save OCR result for attachment %s: %v", attachment.ID, updateErr)
+			} else {
+				log.Printf("OCR completed for attachment %s (%d chars)", attachment.ID, len(ocrText))
+			}
+		}()
 	}
 
 	c.JSON(http.StatusOK, attachment)

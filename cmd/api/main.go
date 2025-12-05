@@ -122,7 +122,10 @@ func main() {
 	} else {
 		log.Println("⚠️ Supabase Storage disabled (missing SUPABASE_URL or SUPABASE_SERVICE_KEY)")
 	}
-	tenderHandler := handler.NewTenderHandler(db, storageSvc)
+
+	// OCR Service for PDF attachments
+	ocrSvc := service.NewOCRService(novitaAPIKey)
+	tenderHandler := handler.NewTenderHandler(db, storageSvc, ocrSvc)
 
 	// 5. Server
 	h := server.Default(
