@@ -238,7 +238,6 @@ func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, erro
 		Title:             eforms.ProcurementProject.Name,
 		Description:       description,
 		DescriptionFull:   descriptionFull,
-		OCRCompressedText: description,
 		CPVCodes:          cpvCodes,
 		NutsCodes:         nutsCodes,
 		ProcedureType:     eforms.ProcurementProject.ProcurementTypeCode,

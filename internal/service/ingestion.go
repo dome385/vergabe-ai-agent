@@ -66,15 +66,14 @@ func (s *IngestionService) processPDF(ctx context.Context, pdfData []byte) (*dom
 	// 3. Tender mit OCR-Text erstellen
 	now := time.Now()
 	tender := &domain.Tender{
-		ID:                uuid.New(),
-		SourcePortal:      "pdf-ocr",
-		Title:             title,
-		DescriptionFull:   ocrText,
-		OCRCompressedText: compressText(ocrText),
-		DeadlineAt:        deadline,
-		ProcessingStatus:  "ocr_processing",
-		ScrapedAt:         &now,
-		CreatedAt:         now,
+		ID:               uuid.New(),
+		SourcePortal:     "pdf-ocr",
+		Title:            title,
+		DescriptionFull:  ocrText,
+		DeadlineAt:       deadline,
+		ProcessingStatus: "ocr_processing",
+		ScrapedAt:        &now,
+		CreatedAt:        now,
 	}
 
 	// 4. Embedding generieren
