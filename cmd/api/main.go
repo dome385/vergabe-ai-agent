@@ -27,7 +27,7 @@ func main() {
 
 	// 1. Config
 	dsn := os.Getenv("DATABASE_URL")
-	hfToken := os.Getenv("HUGGINGFACE_TOKEN")
+	novitaAPIKey := os.Getenv("NOVITA_API_KEY")
 	supabaseJWTSecret := os.Getenv("SUPABASE_JWT_SECRET")
 	openRouterKey := strings.TrimSpace(os.Getenv("OPENROUTER_API_KEY"))
 	openRouterModel := strings.TrimSpace(os.Getenv("OPENROUTER_MODEL"))
@@ -81,7 +81,7 @@ func main() {
 	defer sqlDB.Close()
 
 	// 3. Services
-	ingestionSvc, err := service.NewIngestionService(db, hfToken, embeddingCfg)
+	ingestionSvc, err := service.NewIngestionService(db, novitaAPIKey, embeddingCfg)
 	if err != nil {
 		log.Fatalf("Ingestion Service Init failed: %v", err)
 	}

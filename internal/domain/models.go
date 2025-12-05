@@ -26,14 +26,14 @@ type Company struct {
 	AddressCity         string          `json:"address_city"`
 	AddressCountry      string          `gorm:"default:'DE'" json:"address_country"`
 	ServiceRadiusKM     int             `gorm:"default:100" json:"service_radius_km"`
-	Longitude           float64         `gorm:"type:double precision" json:"longitude,omitempty"`
-	Latitude            float64         `gorm:"type:double precision" json:"latitude,omitempty"`
-	LocationGeog        interface{}     `gorm:"type:geography(Point,4326);<-:false" json:"-"`
+	Longitude           float64         `gorm:"column:longitude;type:double precision" json:"longitude,omitempty"`
+	Latitude            float64         `gorm:"column:latitude;type:double precision" json:"latitude,omitempty"`
+	LocationGeog        interface{}     `gorm:"-" json:"-"`
 	EmployeeCount       int             `json:"employee_count"`
 	AnnualRevenue       float64         `gorm:"type:numeric(12,2)" json:"annual_revenue"`
 	FoundingYear        int             `json:"founding_year"`
 	ProfileSummary      string          `json:"profile_summary"`
-	ProfileEmbedding    pgvector.Vector `gorm:"type:vector(1536)" json:"profile_embedding"` // Changed to 100 dims as per SQL
+	ProfileEmbedding    pgvector.Vector `gorm:"type:vector(1536);<-:update" json:"profile_embedding"` // Changed to 100 dims as per SQL
 	Certifications      json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"certifications"`
 	ProjectReferences   json.RawMessage `gorm:"type:jsonb;default:'[]'" json:"project_references"`
 	EmployeeCVs         json.RawMessage `gorm:"column:employee_cvs;type:jsonb;default:'[]'" json:"employee_cvs"`
@@ -70,8 +70,10 @@ type Tender struct {
 	AuthorityAddress     string          `json:"authority_address"`
 	LocationZip          string          `json:"location_zip"`
 	LocationCity         string          `json:"location_city"`
-	LocationGeog         interface{}     `gorm:"type:geography(Point,4326);<-:false" json:"-"`
-	RequirementEmbedding pgvector.Vector `gorm:"type:vector(1536)" json:"requirement_embedding"`
+	Longitude            float64         `gorm:"column:longitude;type:double precision" json:"longitude,omitempty"`
+	Latitude             float64         `gorm:"column:latitude;type:double precision" json:"latitude,omitempty"`
+	LocationGeog         interface{}     `gorm:"-" json:"-"`
+	RequirementEmbedding pgvector.Vector `gorm:"type:vector(1536);<-:update" json:"requirement_embedding"`
 	FilePath             string          `json:"file_path"`
 	ProcessingStatus     string          `gorm:"default:'pending'" json:"processing_status"`
 	OCRQualityScore      *float64        `gorm:"type:double precision" json:"ocr_quality_score"`
@@ -113,16 +115,20 @@ type ComplianceCheck struct {
 
 // TenderAttachment repräsentiert ein PDF/Dokument das zu einer Ausschreibung gehört
 type TenderAttachment struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	TenderID     uuid.UUID `gorm:"type:uuid;index" json:"tender_id"`
-	Filename     string    `json:"filename"`
-	FileType     string    `json:"file_type"`
-	DocumentType string    `json:"document_type"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description"`
-	StoragePath  string    `json:"storage_path"`
-	FileSize     int       `json:"file_size"`
-	CreatedAt    time.Time `gorm:"type:timestamptz;default:now()" json:"created_at"`
+	ID               uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	TenderID         uuid.UUID       `gorm:"type:uuid;index" json:"tender_id"`
+	Filename         string          `json:"filename"`
+	FileType         string          `json:"file_type"`
+	DocumentType     string          `json:"document_type"`
+	Title            string          `json:"title"`
+	Description      string          `json:"description"`
+	StoragePath      string          `json:"storage_path"`
+	FileSize         int             `json:"file_size"`
+	ContentOCR       string          `gorm:"column:content_ocr;type:text" json:"content_ocr"`
+	OCRProcessed     bool            `gorm:"column:ocr_processed;default:false" json:"ocr_processed"`
+	OCRQualityScore  *float64        `gorm:"column:ocr_quality_score;type:double precision" json:"ocr_quality_score"`
+	ContentEmbedding pgvector.Vector `gorm:"column:content_embedding;type:vector(1536);<-:update" json:"content_embedding"`
+	CreatedAt        time.Time       `gorm:"type:timestamptz;default:now()" json:"created_at"`
 
 	// Relation
 	Tender Tender `gorm:"foreignKey:TenderID" json:"-"`

@@ -15,14 +15,14 @@ import (
 )
 
 type IngestionService struct {
-	db         *gorm.DB
-	xmlParser  *XMLParserService
-	embedder   *openaiembed.Embedder // TYP KORRIGIERT
-	hfToken    string
-	ocrService *OCRService
+	db           *gorm.DB
+	xmlParser    *XMLParserService
+	embedder     *openaiembed.Embedder
+	novitaAPIKey string
+	ocrService   *OCRService
 }
 
-func NewIngestionService(db *gorm.DB, hfToken string, embedCfg EmbeddingProviderConfig) (*IngestionService, error) {
+func NewIngestionService(db *gorm.DB, novitaAPIKey string, embedCfg EmbeddingProviderConfig) (*IngestionService, error) {
 	ctx := context.Background()
 	emb, err := newEmbeddingClient(ctx, embedCfg)
 	if err != nil {
@@ -30,11 +30,11 @@ func NewIngestionService(db *gorm.DB, hfToken string, embedCfg EmbeddingProvider
 	}
 
 	return &IngestionService{
-		db:         db,
-		xmlParser:  NewXMLParserService(db),
-		embedder:   emb,
-		hfToken:    hfToken,
-		ocrService: NewOCRService(hfToken), // Jetzt initialisiert
+		db:           db,
+		xmlParser:    NewXMLParserService(db),
+		embedder:     emb,
+		novitaAPIKey: novitaAPIKey,
+		ocrService:   NewOCRService(novitaAPIKey),
 	}, nil
 }
 

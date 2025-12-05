@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"strings"
@@ -13,11 +14,15 @@ import (
 )
 
 type XMLParserService struct {
-	db *gorm.DB
+	db       *gorm.DB
+	geocoder *GeocodingService
 }
 
 func NewXMLParserService(db *gorm.DB) *XMLParserService {
-	return &XMLParserService{db: db}
+	return &XMLParserService{
+		db:       db,
+		geocoder: NewGeocodingService(),
+	}
 }
 
 // eForms UBL 2.3 XML Structure with namespace support
@@ -249,9 +254,16 @@ func (s *XMLParserService) ParseAndSaveXML(xmlData []byte) (*domain.Tender, erro
 		CreatedAt:         now,
 	}
 
+	// Geocode location
+	lat, lng, err := s.geocoder.Geocode(context.Background(), locationZip, locationCity, "DE")
+	if err == nil && (lat != 0 || lng != 0) {
+		tender.Latitude = lat
+		tender.Longitude = lng
+	}
+
 	// Upsert Logic
 	var existing domain.Tender
-	err := s.db.Where("external_id = ?", tender.ExternalID).First(&existing).Error
+	err = s.db.Where("external_id = ?", tender.ExternalID).First(&existing).Error
 	if err == nil {
 		tender.ID = existing.ID
 		if err := s.db.Model(&existing).Updates(tender).Error; err != nil {

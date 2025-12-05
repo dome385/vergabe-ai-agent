@@ -16,6 +16,7 @@ import (
 type CompanyService struct {
 	db       *gorm.DB
 	embedder *openaiembed.Embedder
+	geocoder *GeocodingService
 }
 
 func NewCompanyService(db *gorm.DB, embedCfg EmbeddingProviderConfig) (*CompanyService, error) {
@@ -28,6 +29,7 @@ func NewCompanyService(db *gorm.DB, embedCfg EmbeddingProviderConfig) (*CompanyS
 	return &CompanyService{
 		db:       db,
 		embedder: emb,
+		geocoder: NewGeocodingService(),
 	}, nil
 }
 
@@ -163,6 +165,16 @@ func (s *CompanyService) CreateCompany(ctx context.Context, input CompanyInput) 
 	}
 	if company.ServiceRadiusKM == 0 {
 		company.ServiceRadiusKM = 100
+	}
+
+	// 4. Geocode address to coordinates
+	lat, lng, err := s.geocoder.Geocode(ctx, input.Basics.AddressZip, input.Basics.AddressCity, company.AddressCountry)
+	if err != nil {
+		// Log but don't fail - geocoding is optional
+		fmt.Printf("Geocoding warning: %v\n", err)
+	} else {
+		company.Latitude = lat
+		company.Longitude = lng
 	}
 
 	// Save to DB
